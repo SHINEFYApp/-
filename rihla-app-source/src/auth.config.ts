@@ -34,12 +34,19 @@ export const authConfig = {
     jwt({ token, user }): JWT {
       if (user) {
         token.id = user.id;
+        // بنمرر الفئة العمرية هنا من قيمة authorize() في src/auth.ts (راجع التعليق هناك) —
+        // بتتخزن في التوكن نفسه (JWT strategy) عشان تفضل متاحة في session.user من غير أي
+        // استعلام DB إضافي في كل صفحة/route بيحتاج يعرف هل ده "وضع أطفال" ولا لأ.
+        token.ageRange = (user as { ageRange?: string | null }).ageRange ?? null;
       }
       return token;
     },
     session({ session, token }) {
       if (session.user && typeof token.id === "string") {
         session.user.id = token.id;
+      }
+      if (session.user) {
+        session.user.ageRange = token.ageRange ?? null;
       }
       return session;
     },

@@ -32,7 +32,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const valid = await bcrypt.compare(password, user.passwordHash);
         if (!valid) return null;
 
-        return { id: user.id, name: user.name, email: user.email };
+        // ageRange بيتسحب هنا مرة واحدة وقت تسجيل الدخول ويتخزن في الـ JWT (راجع callbacks.jwt
+        // في auth.config.ts) — ده اللي بيحدد "وضع الأطفال" (src/lib/kids-mode.ts) في كل التطبيق.
+        return { id: user.id, name: user.name, email: user.email, ageRange: user.ageRange };
       },
     }),
   ],
