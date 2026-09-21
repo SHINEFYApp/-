@@ -193,6 +193,53 @@ export const zakatProfiles = pgTable("zakat_profiles", {
   updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
 });
 
+// تحدي كسر العادة — تسجيل المستخدم في مسار معيّن (تدخين | مخدرات | عادة سرية | حدود علاقة | توبة من زنا)
+// راجع src/lib/habit-challenge-content.ts للمسارات نفسها ومنطق النسخ الثلاث (تيني/عادية/مثالية).
+// صف واحد لكل مستخدم لكل مسار (بيتحدّث في مكانه مش سجل تاريخي) — نفس نمط zakatProfiles.
+export const habitChallengeEnrollments = pgTable(
+  "habit_challenge_enrollments",
+  {
+    id: text("id").primaryKey().$defaultFn(() => createId()),
+    userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    trackKey: text("track_key").notNull(), // smoking | drugs | self_control | boundaries | zina_tawbah
+    versionLevel: text("version_level").notNull().default("tiny"), // tiny | normal | ideal
+    status: text("status").notNull().default("active"), // active | paused | completed
+    startedAt: timestamp("started_at", { mode: "date" }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("habit_challenge_enrollments_user_track_idx").on(t.userId, t.trackKey)]
+);
+
+// سجل يوم واحد لكل مسار مفعّل — تتبّع كيفي (التزم/محلتزمش) بلا نقط ولا مقارنة
+// (راجع قاعدة منع الـ Gamification الدينية في skills/islamic-knowledge-governance).
+export const habitChallengeLogs = pgTable(
+  "habit_challenge_logs",
+  {
+    id: text("id").primaryKey().$defaultFn(() => createId()),
+    userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    trackKey: text("track_key").notNull(),
+    date: date("date", { mode: "date" }).notNull(),
+    kept: boolean("kept").notNull(),
+    note: text("note"),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("habit_challenge_logs_user_track_date_idx").on(t.userId, t.trackKey, t.date)]
+);
+
+// "قصة الأمانة" — وضع الأطفال بس، منفصلة تمامًا عن الجدولين أعلاه (راجع src/lib/kids-honesty-content.ts
+// وskills/child-development). مفيش أي حقل بيسجّل "فشل" أو تفاصيل الموقف — مجرد تأمل إيجابي خفيف اختياري.
+export const kidsHonestyReflections = pgTable(
+  "kids_honesty_reflections",
+  {
+    id: text("id").primaryKey().$defaultFn(() => createId()),
+    userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    date: date("date", { mode: "date" }).notNull(),
+    talkedToTrustedAdult: boolean("talked_to_trusted_adult").notNull().default(false),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("kids_honesty_reflections_user_date_idx").on(t.userId, t.date)]
+);
+
 export const usersRelations = relations(users, ({ many }) => ({
   interests: many(userInterests),
   discoveryResponses: many(discoveryResponses),
@@ -205,4 +252,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   chatMessages: many(chatMessages),
   lifeBalanceAreas: many(lifeBalanceAreas),
   zakatProfile: many(zakatProfiles),
+  habitChallengeEnrollments: many(habitChallengeEnrollments),
+  habitChallengeLogs: many(habitChallengeLogs),
+  kidsHonestyReflections: many(kidsHonestyReflections),
 }));
