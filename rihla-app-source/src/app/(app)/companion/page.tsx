@@ -2,14 +2,18 @@ import { desc, eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { db } from "@/db";
 import { chatMessages } from "@/db/schema";
+import { isKidsMode } from "@/lib/kids-mode";
 import { ChatUI, type ChatMessage } from "@/components/companion/ChatUI";
 
-// شاشة "الونيس" — شات رفيق حر بدون أي قيود موضوعية (قرار خالد الصريح، راجع ملاحظة الـ agent).
+// شاشة "الونيس" — شات رفيق حر بدون أي قيود موضوعية للكبار (قرار خالد الصريح، راجع ملاحظة
+// الـ agent في src/app/api/companion/chat/route.ts). في وضع الأطفال (راجع src/lib/kids-mode.ts)
+// الشخصية بتتغيّر بالكامل للإمام البخاري — العنوان هنا بيعكس الشخصية الفعلية اللي هتردّ.
 // السيرفر كومبوننت هنا مسؤوليته الوحيدة: يجيب آخر سجل محادثة للمستخدم المسجّل دخوله (مربوط بـ
 // userId من الجلسة) عشان المحادثة تفضل موجودة لو المستخدم رجع من جهاز/جلسة تانية.
 export default async function CompanionPage() {
   const session = await auth();
   const userId = session?.user?.id;
+  const kids = isKidsMode(session?.user?.ageRange);
 
   let initialMessages: ChatMessage[] = [];
 
@@ -45,8 +49,12 @@ export default async function CompanionPage() {
           </svg>
         </div>
         <div className="flex flex-col">
-          <span className="text-[16px] font-extrabold text-ink">الونيس</span>
-          <span className="text-[12px] font-medium text-ink-muted">رفيقك اللي تقدر تتكلم معاه في أي وقت</span>
+          <span className="text-[16px] font-extrabold text-ink">
+            {kids ? "الونيس — مع الإمام البخاري" : "الونيس"}
+          </span>
+          <span className="text-[12px] font-medium text-ink-muted">
+            {kids ? "بيحكيلك قصص ومعلومات دينية بطريقة ممتعة" : "رفيقك اللي تقدر تتكلم معاه في أي وقت"}
+          </span>
         </div>
       </header>
 
