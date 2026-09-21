@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import Link from "next/link";
 import type { ContinuityResult, DailyLog, DailyLogToggleKey } from "@/lib/daily-log";
+import type { KidsStory } from "@/lib/kids-stories";
 import { WorshipCard } from "./WorshipCard";
 import { ContinuityLight } from "./ContinuityLight";
 import { SupportHabits } from "./SupportHabits";
@@ -13,6 +14,9 @@ interface HomeDashboardProps {
   dateLabel: string;
   initialLog: DailyLog;
   continuity: ContinuityResult;
+  // من غير null إلا في نسخة الأطفال بس (راجع src/lib/kids-mode.ts) — لو موجودة بيظهر كارت
+  // "قصة اليوم" في أعلى الشاشة قبل أي حاجة تانية.
+  todayStory?: KidsStory | null;
 }
 
 // لوحة "اليوم" — المكوّن العميل الوحيد اللي بيمسك حالة سجل اليوم ويكلّم API التوجل.
@@ -24,6 +28,7 @@ export function HomeDashboard({
   dateLabel,
   initialLog,
   continuity,
+  todayStory,
 }: HomeDashboardProps) {
   const [log, setLog] = useState<DailyLog>(initialLog);
   const [pendingKeys, setPendingKeys] = useState<Set<DailyLogToggleKey>>(new Set());
@@ -82,6 +87,17 @@ export function HomeDashboard({
           </div>
         </div>
       </div>
+
+      {todayStory && (
+        <div className="rounded-[16px] border border-gold/40 bg-gold-soft p-4">
+          <div className="mb-1.5 flex items-center gap-2">
+            <span className="text-[15px]">📖</span>
+            <span className="text-[12.5px] font-extrabold text-gold">قصة اليوم</span>
+          </div>
+          <div className="text-[14px] font-bold text-ink">{todayStory.title}</div>
+          <div className="mt-1.5 text-[13px] leading-[1.8] text-ink-muted">{todayStory.body}</div>
+        </div>
+      )}
 
       <WorshipCard log={log} pendingKeys={pendingKeys} onToggle={toggle} />
 
