@@ -10,6 +10,8 @@ import {
   todayDateOnly,
 } from "@/lib/daily-log";
 import { getCurrentUserId } from "@/lib/auth-user";
+import { isKidsMode } from "@/lib/kids-mode";
+import { pickStoryForDate } from "@/lib/kids-stories";
 import { HomeDashboard } from "@/components/home/HomeDashboard";
 
 function formatDateLabel(today: Date): string {
@@ -58,6 +60,8 @@ export default async function HomePage() {
   const displayName = session.user.name?.trim() || "خالد";
   const avatarLetter = displayName.slice(0, 1);
   const dateLabel = formatDateLabel(todayDateOnly());
+  const kids = isKidsMode(session.user.ageRange);
+  const todayStory = kids ? pickStoryForDate(todayDateOnly()) : null;
 
   return (
     <HomeDashboard
@@ -66,6 +70,7 @@ export default async function HomePage() {
       dateLabel={dateLabel}
       initialLog={todayLog}
       continuity={continuity}
+      todayStory={todayStory}
     />
   );
 }
