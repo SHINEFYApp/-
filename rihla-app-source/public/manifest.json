@@ -1,0 +1,33 @@
+{
+  "name": "رحلة — نظام الحياة الشخصية والعائلية الإسلامي",
+  "short_name": "رحلة",
+  "description": "تتبّع الصلاة والورد القرآني والأذكار والصدقة، لوحة إنتاجية للمهام الحياتية، وتذكيرات حقيقية — كله في مكان واحد.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f6f1e7",
+  "theme_color": "#1e5c46",
+  "lang": "ar",
+  "dir": "rtl",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
