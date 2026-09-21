@@ -9,6 +9,7 @@ import {
   boolean,
   integer,
   date,
+  doublePrecision,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
@@ -164,6 +165,34 @@ export const lifeBalanceAreas = pgTable(
   (t) => [uniqueIndex("life_balance_areas_user_domain_idx").on(t.userId, t.domainKey)]
 );
 
+// ملف الزكاة — صف واحد لكل مستخدم (بيتحدّث في مكانه، مش سجل تاريخي)، بيمسك مدخلات
+// حاسبة الزكاة التقريبية (نقد/ذهب/فضة/عروض تجارة/ديون) + تاريخ بداية الحول وآخر سداد،
+// عشان نقدر نحسب "متى تجب الزكاة" ونذكّر في وقتها (راجع src/lib/zakat.ts للمنطق،
+// وskills/islamic-finance-muamalat لقاعدة "تقدير تنظيمي فقط، المرجع النهائي مفتٍ/مركز زكاة").
+export const zakatProfiles = pgTable("zakat_profiles", {
+  id: text("id").primaryKey().$defaultFn(() => createId()),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" })
+    .unique(),
+  currency: text("currency").notNull().default("EGP"),
+  nisabReference: text("nisab_reference").notNull().default("silver"), // gold | silver
+  goldPricePerGram: doublePrecision("gold_price_per_gram"),
+  silverPricePerGram: doublePrecision("silver_price_per_gram"),
+  cashAmount: doublePrecision("cash_amount").notNull().default(0),
+  goldGrams: doublePrecision("gold_grams").notNull().default(0),
+  silverGrams: doublePrecision("silver_grams").notNull().default(0),
+  tradeGoodsValue: doublePrecision("trade_goods_value").notNull().default(0),
+  debtsOwed: doublePrecision("debts_owed").notNull().default(0),
+  hawlStartDate: date("hawl_start_date", { mode: "date" }),
+  lastPaidDate: date("last_paid_date", { mode: "date" }),
+  malReminderEnabled: boolean("mal_reminder_enabled").notNull().default(true),
+  fitrReminderEnabled: boolean("fitr_reminder_enabled").notNull().default(true),
+  lastFitrReminderHijriYear: integer("last_fitr_reminder_hijri_year"),
+  lastMalReminderSentAt: date("last_mal_reminder_sent_at", { mode: "date" }),
+  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+});
+
 export const usersRelations = relations(users, ({ many }) => ({
   interests: many(userInterests),
   discoveryResponses: many(discoveryResponses),
@@ -175,4 +204,5 @@ export const usersRelations = relations(users, ({ many }) => ({
   lifeTasks: many(lifeTasks),
   chatMessages: many(chatMessages),
   lifeBalanceAreas: many(lifeBalanceAreas),
+  zakatProfile: many(zakatProfiles),
 }));
