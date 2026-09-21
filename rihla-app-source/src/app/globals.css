@@ -1,0 +1,91 @@
+@import url("https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Aref+Ruqaa:wght@700&display=swap");
+@import "tailwindcss";
+
+/*
+  نظام الألوان والخطوط منقول حرفيًا من نموذج الواجهات المعتمد (Design Artifact prototype)
+  عشان أول شاشة حقيقية تتبني تبقى مطابقة بصريًا لما خالد شافه ووافق عليه.
+*/
+
+:root {
+  --bg: #f6f1e7;
+  --surface: #ffffff;
+  --surface-2: #fbf6ea;
+  --ink: #221f19;
+  --ink-muted: #7a7364;
+  --green: #1e5c46;
+  --green-2: #153f32;
+  --green-soft: #e3eee7;
+  --gold: #b4841c;
+  --gold-soft: #f6ecd2;
+  --border: #e8e0ce;
+  --terracotta: #b35b3c;
+  --terracotta-soft: #f3e3da;
+
+  --background: var(--bg);
+  --foreground: var(--ink);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-green: var(--green);
+  --color-green-2: var(--green-2);
+  --color-green-soft: var(--green-soft);
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-border: var(--border);
+  --color-terracotta: var(--terracotta);
+  --color-terracotta-soft: var(--terracotta-soft);
+  --font-sans: "Cairo", sans-serif;
+  --font-arabic-display: "Aref Ruqaa", serif;
+}
+
+/* وضع الليل — نفس منطق الألوان بس معكوس، لحد ما نصمم نسخة ليل مخصصة */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14120d;
+    --surface: #1d1a14;
+    --surface-2: #221f19;
+    --ink: #f2ede1;
+    --ink-muted: #b3a996;
+    --green: #3f8a6c;
+    --green-2: #2c6b52;
+    --green-soft: #1c3a2e;
+    --gold: #e0b657;
+    --gold-soft: #3a3120;
+    --border: #33302a;
+    --terracotta: #d98f6f;
+    --terracotta-soft: #3c2a22;
+
+    --background: var(--bg);
+    --foreground: var(--ink);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  direction: rtl;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Cairo", sans-serif;
+  margin: 0;
+  min-height: 100svh;
+}
+
+button,
+input,
+textarea,
+select {
+  font-family: "Cairo", sans-serif;
+}
