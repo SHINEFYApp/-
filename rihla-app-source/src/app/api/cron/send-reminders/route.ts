@@ -7,9 +7,11 @@
 import { NextResponse } from "next/server";
 import { and, eq, gte, isNotNull, lte } from "drizzle-orm";
 import { db } from "@/db";
-import { users, reminderRules, dailyLogs, lifeTasks } from "@/db/schema";
+import { users, reminderRules, dailyLogs, lifeTasks, zakatProfiles } from "@/db/schema";
 import { DAILY_VIRTUE_TEXTS, type WorshipReminderType } from "@/lib/worship-content";
 import { DEFAULT_REMINDER_TIMES, sendPushToUser } from "@/lib/push";
+import { computeHawlDueDate } from "@/lib/zakat";
+import { RAMADAN_MONTH, getHijriDateParts } from "@/lib/hijri";
 
 // الراوت ده بيقرا الوقت الحالي في كل استدعاء — لازم يفضل ديناميكي ومايتخزنش.
 export const dynamic = "force-dynamic";
@@ -24,6 +26,25 @@ const REMINDER_TIMEZONE = process.env.REMINDER_TIMEZONE || "Africa/Cairo";
 const TASK_REMINDER_WINDOW_MINUTES = 5;
 
 const WORSHIP_TYPES = Object.keys(DAILY_VIRTUE_TEXTS) as WorshipReminderType[];
+
+// وقت فحص تذكيرات الزكاة اليومي (مرة واحدة في اليوم بس، مش كل دقيقة زي الصلاة) —
+// وقت صباحي مناسب بعيد عن أوقات الصلاة الافتراضية فوق.
+const ZAKAT_CHECK_TIME = "09:00";
+// آخر ٤ أيام من رمضان (تقريبًا) — وقت شائع لإخراج زكاة الفطر قبل صلاة العيد.
+const FITR_REMINDER_MIN_DAY = 27;
+
+function todayDateOnlyUTC(): Date {
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+}
+
+function isSameUTCDate(a: Date, b: Date): boolean {
+  return (
+    a.getUTCFullYear() === b.getUTCFullYear() &&
+    a.getUTCMonth() === b.getUTCMonth() &&
+    a.getUTCDate() === b.getUTCDate()
+  );
+}
 
 function currentHHMM(timeZone: string): string {
   const formatter = new Intl.DateTimeFormat("en-GB", {
@@ -147,5 +168,56 @@ export async function GET(request: Request) {
     }
   }
 
-  return NextResponse.json({ ok: true, nowHHMM, worshipSent, taskSent });
+  // ٣) تذكيرات الزكاة — فحص مرة واحدة يوميًا بس (وقت ثابت)، مش كل دقيقة زي الصلاة.
+  // زكاة المال: لو الحول خلص (وفق تاريخ بداية الحول المُدخل من المستخدم) ولسه محدّش سدد.
+  // زكاة الفطر: آخر أيام رمضان (تقويم أم القرى)، مرة واحدة كل سنة هجرية.
+  let zakatSent = 0;
+  if (nowHHMM === ZAKAT_CHECK_TIME) {
+    const today = todayDateOnlyUTC();
+    const hijriToday = getHijriDateParts(today);
+    const isFitrWindow = hijriToday.month === RAMADAN_MONTH && hijriToday.day >= FITR_REMINDER_MIN_DAY;
+
+    const profiles = await db.select().from(zakatProfiles);
+
+    for (const profile of profiles) {
+      // زكاة المال
+      if (profile.malReminderEnabled && profile.hawlStartDate) {
+        const dueDate = computeHawlDueDate(profile.hawlStartDate);
+        const alreadySentToday =
+          profile.lastMalReminderSentAt && isSameUTCDate(profile.lastMalReminderSentAt, today);
+        if (dueDate && today >= dueDate && !alreadySentToday) {
+          const result = await sendPushToUser(profile.userId, {
+            title: "زكاة المال",
+            body: "الحول اكتمل على مالك — افتح حاسبة الزكاة في رحلة عشان تحسب المستحق وتسدده.",
+            url: "/zakat",
+          });
+          if (result.sent > 0) {
+            zakatSent += 1;
+            await db
+              .update(zakatProfiles)
+              .set({ lastMalReminderSentAt: today })
+              .where(eq(zakatProfiles.id, profile.id));
+          }
+        }
+      }
+
+      // زكاة الفطر
+      if (profile.fitrReminderEnabled && isFitrWindow && profile.lastFitrReminderHijriYear !== hijriToday.year) {
+        const result = await sendPushToUser(profile.userId, {
+          title: "زكاة الفطر",
+          body: "اقترب العيد — متنساش تخرج زكاة الفطر عنك وعن اللي تعولهم قبل صلاة العيد.",
+          url: "/zakat",
+        });
+        if (result.sent > 0) {
+          zakatSent += 1;
+          await db
+            .update(zakatProfiles)
+            .set({ lastFitrReminderHijriYear: hijriToday.year })
+            .where(eq(zakatProfiles.id, profile.id));
+        }
+      }
+    }
+  }
+
+  return NextResponse.json({ ok: true, nowHHMM, worshipSent, taskSent, zakatSent });
 }
