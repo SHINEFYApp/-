@@ -67,6 +67,52 @@
   }
 }
 
+/*
+  نسخة الأطفال — بتتفعّل تلقائيًا (راجع [data-kids] على الحاوية الجذرية في
+  src/app/(app)/layout.tsx) لأي مستخدم فئته العمرية "أقل من ١٨" (٦-١٧ سنة تقريبًا،
+  راجع src/lib/kids-mode.ts). ألوان أدفى وأكتر مرح بدل الطابع الهادئ الرسمي بتاع النسخة
+  العادية، مع الإبقاء على نفس البنية والخطوط عشان القراءة تفضل واضحة.
+*/
+[data-kids="true"] {
+  --bg: #fff6e9;
+  --surface: #ffffff;
+  --surface-2: #fff0d6;
+  --ink: #2b2110;
+  --ink-muted: #8a7350;
+  --green: #2f8f5b;
+  --green-2: #1f6b42;
+  --green-soft: #e2f5e9;
+  --gold: #e08a1e;
+  --gold-soft: #fde9c8;
+  --border: #f3ddb0;
+  --terracotta: #e06b4f;
+  --terracotta-soft: #fbe2d8;
+
+  --background: var(--bg);
+  --foreground: var(--ink);
+}
+
+@media (prefers-color-scheme: dark) {
+  [data-kids="true"] {
+    --bg: #1c1608;
+    --surface: #26200f;
+    --surface-2: #2c2410;
+    --ink: #fbf1dc;
+    --ink-muted: #cdb98c;
+    --green: #4bb47f;
+    --green-2: #35916a;
+    --green-soft: #1f4030;
+    --gold: #f3b03e;
+    --gold-soft: #40320f;
+    --border: #423417;
+    --terracotta: #f0906b;
+    --terracotta-soft: #452a1e;
+
+    --background: var(--bg);
+    --foreground: var(--ink);
+  }
+}
+
 * {
   box-sizing: border-box;
 }
