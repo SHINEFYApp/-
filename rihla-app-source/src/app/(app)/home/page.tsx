@@ -12,6 +12,8 @@ import {
 import { getCurrentUserId } from "@/lib/auth-user";
 import { isKidsMode } from "@/lib/kids-mode";
 import { pickStoryForDate } from "@/lib/kids-stories";
+import { pickHonestyStoryForDate } from "@/lib/kids-honesty-content";
+import { getTodayHonestyReflection } from "@/lib/kids-honesty";
 import { HomeDashboard } from "@/components/home/HomeDashboard";
 
 function formatDateLabel(today: Date): string {
@@ -62,6 +64,8 @@ export default async function HomePage() {
   const dateLabel = formatDateLabel(todayDateOnly());
   const kids = isKidsMode(session.user.ageRange);
   const todayStory = kids ? pickStoryForDate(todayDateOnly()) : null;
+  const honestyStory = kids ? pickHonestyStoryForDate(todayDateOnly()) : null;
+  const honestyReflection = kids ? await getTodayHonestyReflection(userId) : null;
 
   return (
     <HomeDashboard
@@ -71,6 +75,8 @@ export default async function HomePage() {
       initialLog={todayLog}
       continuity={continuity}
       todayStory={todayStory}
+      honestyStory={honestyStory}
+      initialTalkedToTrustedAdult={honestyReflection?.talkedToTrustedAdult ?? false}
     />
   );
 }
