@@ -6,6 +6,7 @@ import { db } from "@/db";
 import { userInterests, users } from "@/db/schema";
 import { isSourceAgeRange, isSourceInterestKey, type SourceInterestKey } from "@/lib/sources-content";
 import { SourcesFlow } from "@/components/sources/SourcesFlow";
+import { ConnectedAccounts } from "@/components/sources/ConnectedAccounts";
 
 // مصادر مقترحة — منقولة من نموذج الواجهات المعتمد Sources.dc.html.
 export default async function SourcesPage() {
@@ -45,6 +46,7 @@ export default async function SourcesPage() {
 
       <div className="flex flex-col gap-4 px-5 pb-5 pt-4">
         <SourcesFlow initialAgeRange={initialAgeRange} initialInterests={initialInterests} />
+        <ConnectedAccounts />
       </div>
     </div>
   );
