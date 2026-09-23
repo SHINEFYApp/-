@@ -112,7 +112,7 @@ export const reminderRules = pgTable(
   {
     id: text("id").primaryKey().$defaultFn(() => createId()),
     userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-    type: text("type").notNull(), // fajr | dhuhr | asr | maghrib | isha | quran | adhkar | sadaqah
+    type: text("type").notNull(), // fajr | dhuhr | asr | maghrib | isha | quran | adhkarMorning | adhkarEvening | sadaqah
     enabled: boolean("enabled").notNull().default(true),
   },
   (t) => [uniqueIndex("reminder_rules_user_type_idx").on(t.userId, t.type)]
@@ -133,6 +133,10 @@ export const lifeTasks = pgTable(
     reminderEnabled: boolean("reminder_enabled").notNull().default(false),
     reminderAt: timestamp("reminder_at", { mode: "date" }),
     notes: text("notes"),
+    // بتتسجّل تلقائي لما status يتحول لـ "done" (وبتتصفّر لو اترجعت لحالة تانية) —
+    // عشان صفحة "الجدول" (سجل يوم بعينه) تقدر تنسب المهمة لليوم اللي اتعملت فيه فعليًا،
+    // مش بس اليوم اللي كانت مجدولة له (dueAt) — مهم للمهام من غير dueAt أصلًا.
+    completedAt: timestamp("completed_at", { mode: "date" }),
     createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
   },
