@@ -13,6 +13,7 @@ export interface Task {
   reminderEnabled: boolean;
   reminderAt: string | null; // ISO string
   notes: string | null;
+  completedAt: string | null; // ISO string — وقت آخر تحويل لـ status="done" فعليًا
   createdAt: string; // ISO string
   updatedAt: string; // ISO string
 }
