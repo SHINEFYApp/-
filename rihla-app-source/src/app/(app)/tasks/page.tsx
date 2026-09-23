@@ -3,8 +3,9 @@ import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { lifeTasks } from "@/db/schema";
 import { getCurrentUserId } from "@/lib/auth-user";
-import { KanbanBoard } from "@/components/tasks/KanbanBoard";
+import { TasksTabs } from "@/components/tasks/TasksTabs";
 import type { Task } from "@/components/tasks/types";
+import { dateKeyOf, todayDateOnlyUTC } from "@/lib/schedule";
 
 // لوحة الإنتاجية — مهام الحياة العادية (تعلّم/شغل/اجتماعات/أهداف شخصية)، منفصلة تمامًا عن تتبع العبادات.
 // بدون أي نقط أو مكافآت أو "streaks"، وصياغة محايدة للمهام المتأخرة (راجع الـ PRD).
@@ -23,6 +24,7 @@ export default async function TasksPage() {
     reminderEnabled: r.reminderEnabled,
     reminderAt: r.reminderAt ? r.reminderAt.toISOString() : null,
     notes: r.notes,
+    completedAt: r.completedAt ? r.completedAt.toISOString() : null,
     createdAt: r.createdAt.toISOString(),
     updatedAt: r.updatedAt.toISOString(),
   }));
@@ -36,7 +38,7 @@ export default async function TasksPage() {
         </div>
       </header>
 
-      <KanbanBoard initialTasks={tasks} />
+      <TasksTabs initialTasks={tasks} todayKey={dateKeyOf(todayDateOnlyUTC())} />
     </div>
   );
 }
