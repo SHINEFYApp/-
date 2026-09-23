@@ -244,6 +244,45 @@ export const kidsHonestyReflections = pgTable(
   (t) => [uniqueIndex("kids_honesty_reflections_user_date_idx").on(t.userId, t.date)]
 );
 
+// ربط حسابات خارجية (Google — بيغطي يوتيوب والكالندر بنفس الـ OAuth grant) — لترشيحات
+// المصادر الشخصية وربط الإفنتات، بقرار خالد الصريح (توسيع لمبدأ "أنواع محتوى بس" الأصلي
+// في sources-content.ts — القرار ده منه مباشرة مش تعديل منفرد من الـ agent).
+// التوكنات متخزنة مشفّرة (AES-256-GCM عبر src/lib/crypto.ts) — مفيش توكن خام في القاعدة أبدًا.
+export const connectedAccounts = pgTable(
+  "connected_accounts",
+  {
+    id: text("id").primaryKey().$defaultFn(() => createId()),
+    userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    provider: text("provider").notNull(), // "google" (نطاق واحد بيغطي يوتيوب + كالندر)
+    scope: text("scope").notNull(), // الصلاحيات الممنوحة فعليًا زي ما جوجل رجّعتها
+    accessTokenEnc: text("access_token_enc").notNull(),
+    refreshTokenEnc: text("refresh_token_enc"),
+    expiresAt: timestamp("expires_at", { mode: "date" }).notNull(),
+    providerAccountEmail: text("provider_account_email"), // للعرض بس ("متصل بحساب: ...")
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("connected_accounts_user_provider_idx").on(t.userId, t.provider)]
+);
+
+// القنوات اللي المستخدم بيتابعها — إما مسحوبة تلقائي من اشتراكات يوتيوب بعد الربط،
+// أو مضافة يدويًا (بديل من غير ما يحتاج يربط حسابه أصلًا). بتغذي الترشيحات اليومية
+// وتنبيهات الحلقات الجديدة.
+export const followedChannels = pgTable(
+  "followed_channels",
+  {
+    id: text("id").primaryKey().$defaultFn(() => createId()),
+    userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    platform: text("platform").notNull(), // "youtube" مبدئيًا
+    channelId: text("channel_id").notNull(),
+    channelTitle: text("channel_title").notNull(),
+    channelThumbnail: text("channel_thumbnail"),
+    source: text("source").notNull().default("manual"), // manual | google_sync
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("followed_channels_user_platform_channel_idx").on(t.userId, t.platform, t.channelId)]
+);
+
 export const usersRelations = relations(users, ({ many }) => ({
   interests: many(userInterests),
   discoveryResponses: many(discoveryResponses),
@@ -259,4 +298,6 @@ export const usersRelations = relations(users, ({ many }) => ({
   habitChallengeEnrollments: many(habitChallengeEnrollments),
   habitChallengeLogs: many(habitChallengeLogs),
   kidsHonestyReflections: many(kidsHonestyReflections),
+  connectedAccounts: many(connectedAccounts),
+  followedChannels: many(followedChannels),
 }));
