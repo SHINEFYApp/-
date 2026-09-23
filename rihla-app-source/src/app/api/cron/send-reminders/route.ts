@@ -8,7 +8,13 @@ import { NextResponse } from "next/server";
 import { and, eq, gte, isNotNull, lte } from "drizzle-orm";
 import { db } from "@/db";
 import { users, reminderRules, dailyLogs, lifeTasks, zakatProfiles } from "@/db/schema";
-import { DAILY_VIRTUE_TEXTS, type WorshipReminderType } from "@/lib/worship-content";
+import {
+  DAILY_VIRTUE_TEXTS,
+  DHIKR_LIBRARY,
+  DHIKR_ROTATION,
+  type DhikrKey,
+  type WorshipReminderType,
+} from "@/lib/worship-content";
 import { DEFAULT_REMINDER_TIMES, sendPushToUser } from "@/lib/push";
 import { computeHawlDueDate } from "@/lib/zakat";
 import { RAMADAN_MONTH, getHijriDateParts } from "@/lib/hijri";
@@ -79,8 +85,10 @@ function isDoneForType(
       return log.isha;
     case "quran":
       return log.quran;
-    case "adhkar":
-      return log.adhkarMorning || log.adhkarEvening;
+    case "adhkarMorning":
+      return log.adhkarMorning;
+    case "adhkarEvening":
+      return log.adhkarEvening;
     case "sadaqah":
       return log.sadaqah;
     default:
@@ -90,6 +98,22 @@ function isDoneForType(
 
 function truncateBody(text: string, max = 160): string {
   return text.length > max ? `${text.slice(0, max - 1)}…` : text;
+}
+
+function dayOfYear(d: Date): number {
+  const start = Date.UTC(d.getUTCFullYear(), 0, 1);
+  return Math.floor((d.getTime() - start) / 86_400_000) + 1;
+}
+
+// أذكار الصباح/المساء بطلب خالد: بدل نفس نص الفضل الثابت كل يوم، بندوّر يوميًا على
+// ذكر مختلف من DHIKR_LIBRARY المعتمدة (نفس منطق DHIKR_ROTATION المستخدم فعليًا في
+// /api/dhikr/today — dayOfYear % DHIKR_ROTATION.length) — نص حرفي من المكتبة المعتمدة
+// في كل الأحوال، بس بيتغيّر يوم عن يوم عشان يحس المستخدم بتجدد، مش تكرار نفس السطر
+// كل يوم لسنين. الصباح والمساء بياخدوا إزاحة مختلفة عن بعض عشان ميبقوش نفس الذكر.
+function pickDailyDhikr(date: Date, slotOffset: 0 | 1): DhikrKey {
+  const n = DHIKR_ROTATION.length;
+  const idx = (dayOfYear(date) + slotOffset) % n;
+  return DHIKR_ROTATION[idx];
 }
 
 export async function GET(request: Request) {
@@ -134,9 +158,17 @@ export async function GET(request: Request) {
         if (!enabled || isDoneForType(type, log)) continue;
 
         const virtue = DAILY_VIRTUE_TEXTS[type];
+        let body: string;
+        if (type === "adhkarMorning" || type === "adhkarEvening") {
+          const dhikr = DHIKR_LIBRARY[pickDailyDhikr(date, type === "adhkarMorning" ? 0 : 1)];
+          body = truncateBody(`${dhikr.text} — ${dhikr.virtue} — ${dhikr.source}`);
+        } else {
+          body = truncateBody(`${virtue.text} — ${virtue.source}`);
+        }
+
         const result = await sendPushToUser(user.id, {
           title: virtue.label,
-          body: truncateBody(`${virtue.text} — ${virtue.source}`),
+          body,
           url: "/home",
         });
         if (result.sent > 0) worshipSent += 1;
