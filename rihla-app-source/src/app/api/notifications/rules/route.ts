@@ -15,8 +15,7 @@ function todayUTC(): Date {
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 }
 
-// نوع التذكير "adhkar" بيغطي أذكار الصباح والمساء مع بعض في dailyLogs —
-// بنعتبره "خلص النهارده" لو حصل أي واحد منهم.
+// أذكار الصباح والمساء بقوا نوعين منفصلين — كل واحد بيتفحص لوحده مقابل عمود dailyLogs بتاعه.
 function isDoneForType(
   type: WorshipReminderType,
   log: typeof dailyLogs.$inferSelect | undefined
@@ -35,8 +34,10 @@ function isDoneForType(
       return log.isha;
     case "quran":
       return log.quran;
-    case "adhkar":
-      return log.adhkarMorning || log.adhkarEvening;
+    case "adhkarMorning":
+      return log.adhkarMorning;
+    case "adhkarEvening":
+      return log.adhkarEvening;
     case "sadaqah":
       return log.sadaqah;
     default:
