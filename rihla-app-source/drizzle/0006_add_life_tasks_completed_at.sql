@@ -1,0 +1,1 @@
+ALTER TABLE "life_tasks" ADD COLUMN "completed_at" timestamp;
