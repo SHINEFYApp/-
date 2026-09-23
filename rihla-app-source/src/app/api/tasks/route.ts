@@ -58,6 +58,7 @@ export async function POST(request: NextRequest) {
       reminderEnabled,
       reminderAt,
       notes,
+      completedAt: status === "done" ? new Date() : null,
     })
     .returning();
 
