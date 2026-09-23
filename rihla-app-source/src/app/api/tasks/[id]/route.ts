@@ -34,7 +34,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     patch.category = body.category as (typeof CATEGORIES)[number];
   }
   if ("status" in body && STATUSES.includes(body.status as (typeof STATUSES)[number])) {
-    patch.status = body.status as (typeof STATUSES)[number];
+    const nextStatus = body.status as (typeof STATUSES)[number];
+    patch.status = nextStatus;
+    // بنسجّل وقت الإنجاز الفعلي هنا — ده اللي بيسمح لصفحة "الجدول" إنها تنسب المهمة
+    // لليوم اللي اتعملت فيه بالظبط (حتى لو مفيهاش dueAt أصلًا)، مش بس تختفي في status=done
+    // من غير أثر لليوم. لو اترجعت لحالة تانية، بنصفّر الوقت (يبقى ملهوش يوم إنجاز مسجّل).
+    patch.completedAt = nextStatus === "done" ? new Date() : null;
   }
   if ("dueAt" in body) {
     patch.dueAt = parseDate(body.dueAt);
