@@ -112,6 +112,7 @@ export const DEFAULT_REMINDER_TIMES: Record<WorshipReminderType, `${number}${num
   maghrib: "18:45",
   isha: "20:15",
   quran: "21:00",
-  adhkar: "19:30",
+  adhkarMorning: "05:30", // بعد الفجر (05:00) بنص ساعة
+  adhkarEvening: "18:50", // بعد المغرب (18:45) بشوية
   sadaqah: "12:00",
 };
